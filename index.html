@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard Webpage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 50px;
+            transition: background-color 0.5s;
+        }
+        
+        /* Normal Page Styles */
+        #normal-ui {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 80%;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #error-message {
+            color: red;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Secret Game Styles */
+        #game-ui {
+            display: none;
+        }
+        .dark-mode {
+            background-color: #111;
+            color: #fff;
+        }
+        canvas {
+            background-color: #222;
+            border: 2px solid #00ff00;
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            margin-top: 20px;
+        }
+        #score-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 24px;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- The "Boring" Front Page -->
+    <div id="normal-ui">
+        <h2>Employee Portal</h2>
+        <p>Please enter your access code to proceed.</p>
+        <input type="password" id="codeInput" placeholder="Enter code...">
+        <br>
+        <button onclick="checkCode()">Login</button>
+        <p id="error-message">Invalid code.</p>
+    </div>
+
+    <!-- The Secret Game -->
+    <div id="game-ui">
+        <h2 id="score-display">Score: 0</h2>
+        <p>Use Left and Right arrows to dodge the red blocks.</p>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+    </div>
+
+    <script>
+        // Set your made-up code here!
+        const SECRET_CODE = "arcade";
+        
+        let gameLoop;
+        let score = 0;
+        
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Player object
+        const player = {
+            x: 180,
+            y: 350,
+            width: 40,
+            height: 40,
+            speed: 20
+        };
+        
+        // Enemies array
+        let enemies = [];
+
+        function checkCode() {
+            const input = document.getElementById("codeInput").value.toLowerCase();
+            
+            if (input === SECRET_CODE) {
+                // Hide normal UI, show game UI
+                document.getElementById("normal-ui").style.display = "none";
+                document.getElementById("game-ui").style.display = "block";
+                document.body.classList.add("dark-mode");
+                
+                // Start the game
+                startGame();
+            } else {
+                document.getElementById("error-message").style.display = "block";
+                setTimeout(() => {
+                    document.getElementById("error-message").style.display = "none";
+                }, 2000);
+            }
+        }
+
+        // --- GAME LOGIC --- //
+
+        // Listen for keyboard input
+        document.addEventListener("keydown", function(event) {
+            if (document.getElementById("game-ui").style.display === "block") {
+                if (event.key === "ArrowLeft" && player.x > 0) {
+                    player.x -= player.speed;
+                } else if (event.key === "ArrowRight" && player.x < canvas.width - player.width) {
+                    player.x += player.speed;
+                }
+            }
+        });
+
+        function spawnEnemy() {
+            const size = Math.random() * 30 + 10;
+            const x = Math.random() * (canvas.width - size);
+            enemies.push({
+                x: x,
+                y: -50,
+                width: size,
+                height: size,
+                speed: Math.random() * 3 + 2
+            });
+        }
+
+        function updateGame() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw player
+            ctx.fillStyle = "#00ff00"; // Neon green
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Randomly spawn enemies
+            if (Math.random() < 0.05) spawnEnemy();
+            
+            // Update and draw enemies
+            for (let i = 0; i < enemies.length; i++) {
+                let e = enemies[i];
+                e.y += e.speed;
+                
+                ctx.fillStyle = "#ff0000"; // Red danger blocks
+                ctx.fillRect(e.x, e.y, e.width, e.height);
+                
+                // Collision detection
+                if (
+                    player.x < e.x + e.width &&
+                    player.x + player.width > e.x &&
+                    player.y < e.y + e.height &&
+                    player.y + player.height > e.y
+                ) {
+                    gameOver();
+                    return; // Stop the update loop
+                }
+                
+                // Remove enemies that fall off screen and add to score
+                if (e.y > canvas.height) {
+                    enemies.splice(i, 1);
+                    score++;
+                    document.getElementById("score-display").innerText = "Score: " + score;
+                }
+            }
+            
+            gameLoop = requestAnimationFrame(updateGame);
+        }
+
+        function startGame() {
+            score = 0;
+            enemies = [];
+            player.x = 180;
+            document.getElementById("score-display").innerText = "Score: " + score;
+            updateGame();
+        }
+
+        function gameOver() {
+            cancelAnimationFrame(gameLoop);
+            ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "#fff";
+            ctx.font = "30px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+            ctx.font = "20px Arial";
+            ctx.fillText("Click to Restart", canvas.width / 2, canvas.height / 2 + 40);
+            
+            canvas.addEventListener("click", function restartListener() {
+                canvas.removeEventListener("click", restartListener);
+                startGame();
+            });
+        }
+    </script>
+</body>
+</html></p>
+
+<a href="https://www.w3schools.com">Visit W3Scools
