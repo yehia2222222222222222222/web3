@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel - User Management</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 40px; }
+.container { max-width: 400px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+input, button { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
+button { background-color: #d9534f; color: white; border: none; cursor: pointer; }
+button:hover { background-color: #c9302c; }
+#status { margin-top: 15px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>Admin User Control</h2>
+<label for="userId">User ID or Email:</label>
+<input type="text" id="userId" placeholder="Enter User ID to ban" required>
+
+<label for="adminToken">Admin Auth Token:</label>
+<input type="password" id="adminToken" placeholder="Enter Bearer Token" required>
+
+<button onclick="banUser()">Ban User</button>
+<div id="status"></div>
+</div>
+
+<script>
+const API_BASE_URL = "https://yehia-pizza-app-latest.onrender.com";
+
+async function banUser() {
+const userId = document.getElementById('userId').value;
+const token = document.getElementById('adminToken').value;
+const statusDiv = document.getElementById('status');
+
+if (!userId || !token) {
+statusDiv.textContent = "Please provide both User ID and Admin Token.";
+statusDiv.style.color = "red";
+return;
+}
+
+statusDiv.textContent = "Processing...";
+statusDiv.style.color = "black";
+
+try {
+// Replace '/api/admin/ban' with your actual backend endpoint
+const response = await fetch(${API_BASE_URL}/api/admin/ban, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization':Bearer ${token}
+},
+body: JSON.stringify({ userId: userId, action: 'ban' })
+});
+
+if (response.ok) {
+const result = await response.json();
+statusDiv.textContent = Success: User ${userId} has been banned.; statusDiv.style.color = "green"; } else { statusDiv.textContent =Error: ${response.status} - ${response.statusText};
+statusDiv.style.color = "red";
+}
+} catch (error) {
+statusDiv.textContent = Network Error: Unable to connect to server.;
+statusDiv.style.color = "red";
+}
+}
+</script>
+
+</body>
+</html>
